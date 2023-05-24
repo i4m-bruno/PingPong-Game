@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+  
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PING-PONG</title>
+</head>
+
+<style>
+    * {
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+
+<body>
+
+    <canvas></canvas>
+
+    <script>
+    const canvasEl = document.querySelector("canvas"),
+          canvasCtx = canvasEl.getContext("2d"),
+          lineWidth = 10, gapX = 10
+    
+    let mouse = {x : 0, y: 0}
+
+    const field = {
+      h: window.innerHeight,
+      w: window.innerWidth,
+      draw: function () {
+        canvasCtx.fillStyle = "#0522fc"
+        canvasCtx.fillRect(0, 0, this.w, this.h)
+      }
+    },
+
+    line = {
+      h: field.h,
+      w: lineWidth,
+      draw: function() {
+        canvasCtx.fillStyle = "#ba05fc"
+        canvasCtx.fillRect(
+          field.w / 2 - this.w / 2, 0, this.w, this.h
+        )
+      }
+    },
+
+    leftPaddle = {
+      x: gapX,
+      y: 0,
+      w: lineWidth,
+      h: 200,
+      _move: function() {
+        this.y = mouse.y - this.h / 2
+      },
+      draw: function() {
+        canvasCtx.fillRect(this.x, this.y, this.w, this.h)
+        this._move()
+      }
+    },
+
+    rightPaddle = {
+      x: field.w - lineWidth - 10,
+      y: 200,
+      w: lineWidth,
+      h: 200,
+      speed: 2,
+      _move: function () {
+        if(this.y + this.h / 2 < ball.y + ball.r)
+        {
+          this.y += this.speed
+        } else {
+          this.y -= this.speed
+        }
+      },
+      draw: function() {
+        canvasCtx.fillRect(
+          this.x,
+          this.y,
+          this.w,
+          this.h
+        )
+        this._move()
+      }
+    },
+
+    score = {
+      human: 0,
+      ia: 0,
+      draw: function() {
+        canvasCtx.font = "bold 72px Arial"
+        canvasCtx.textAlign = "center"
+        canvasCtx.textBaseline = "top"
+        canvasCtx.fillStyle = "#ba05fc"
+        canvasCtx.fillText(this.human, field.w / 4, 50)
+        canvasCtx.fillText(this.ia,field.w / 4 + field.w / 2,50)
+      }
+    },
+
+    ball = {
+      x: 50,
+      y: 50,
+      r: 20,
+      speed: 4,
+
+      directionX: 1,
+      directionY: 1,
+      _reverseX: function () {
+        this.directionX *= -1
+      },
+      _reverseY: function () {
+        this.directionY *= -1
+      },
+
+      _calcPosition: function () {
+
+        if(this.x > field.w - this.r - rightPaddle.w - gapX)
+        {
+          if(this.y + this.r > rightPaddle.y && this.y - this.r < rightPaddle.y + rightPaddle.h)
+          {
+            this._reverseX()
+          }
+          else {
+            score.human ++
+            this.speed++
+            rightPaddle.speed ++
+            this.y = field.h / 2
+            this.x = field.w / 2
+          }
+        }
+        
+        if (this.x < gapX + this.r + leftPaddle.w)
+        {
+          if (this.y + this.r > leftPaddle.y && 
+              this.y - this.r < leftPaddle.y + leftPaddle.h)
+          {
+            this._reverseX()
+          } else {
+            score.ia++
+            this.y = field.h / 2
+            this.x = field.w / 2
+          }
+        }
+
+        if ((this.y - this.r < 0 && this.directionY < 0) || (this.y > field.h - this.r && this.directionY > 0))
+        {
+          this._reverseY()
+        } 
+      },
+
+      _move: function () {
+        this.x += this.directionX * this.speed
+        this.y += this.directionY * this.speed
+      },
+
+      draw: function() {
+        canvasCtx.fillStyle = "#ba05fc"
+        canvasCtx.beginPath()
+        canvasCtx.arc(this.x,this.y,this.r,0,2 * Math.PI,false)
+        canvasCtx.fill()
+        this._move()
+        this._calcPosition()
+      }
+    }
+
+    function setup() 
+    {
+        canvasEl.width = canvasCtx.width = field.w
+        canvasEl.height = canvasCtx.height = field.h
+    }
+
+    function draw() 
+    {
+        field.draw()
+        line.draw()
+        leftPaddle.draw()
+        rightPaddle.draw()
+        score.draw()
+        ball.draw()      
+    }
+
+    window.animateFrame = (function ()
+      {
+        return (
+          window.requestAnimationFrame ||
+          window.webkitRequestAnimationFrame ||
+          window.mozRequestAnimationFrame ||
+          window.oRequestAnimationFrame ||
+          window.msRequestAnimationFrame ||
+          function (callback) {
+            return window.setTimeout(callback, 1000/60)
+          }
+        )
+      }
+    )()
+
+    function main() {
+      animateFrame(main)
+      draw()
+    }
+
+    setup()
+    main()
+
+    canvasEl.addEventListener('mousemove', function(e) {
+      mouse.x = e.pageX
+      mouse.y = e.pageY
+    })
+    </script>
+</body>
+</html>
